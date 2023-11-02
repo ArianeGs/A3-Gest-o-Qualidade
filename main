@@ -1,0 +1,281 @@
+import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox
+
+class Dono:
+    def __init__(self, nome, sobrenome, cpf, numero_contato):
+        self.nome = nome
+        self.sobrenome = sobrenome
+        self.cpf = cpf
+        self.numero_contato = numero_contato
+
+class Animal:
+    def __init__(self, nome, especie, dono):
+        self.nome = nome
+        self.especie = especie
+        self.dono = dono
+
+class AtendimentoVeterinario:
+    def __init__(self, animal, data, sintomas, diagnostico):
+        self.animal = animal
+        self.data = data
+        self.sintomas = sintomas
+        self.diagnostico = diagnostico
+
+class CRUDApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("CRUD de Donos, Animais e Atendimento Veterinário")
+
+        # Crie uma guia de notebook para separar as funcionalidades
+        self.tab_control = ttk.Notebook(self.root)
+        self.tab_dono = ttk.Frame(self.tab_control)
+        self.tab_animal = ttk.Frame(self.tab_control)
+        self.tab_atendimento = ttk.Frame(self.tab_control)
+        self.tab_control.add(self.tab_dono, text="Donos")
+        self.tab_control.add(self.tab_animal, text="Animais")
+        self.tab_control.add(self.tab_atendimento, text="Atendimento Veterinário")
+        self.tab_control.pack(expand=1, fill="both")
+        
+
+
+        # Inicialize listas para armazenar objetos
+        self.donos = []
+        self.animais = []
+        self.atendimentos = []
+
+        # Crie a interface para Donos
+        self.criar_interface_dono()
+
+        # Crie a interface para Animais
+        self.criar_interface_animal()
+
+        # Crie a interface para Atendimento Veterinário
+        self.criar_interface_atendimento()
+
+    def cadastrar_dono(self):
+        nome = self.nome_entry.get()
+        sobrenome = self.sobrenome_entry.get()
+        cpf = self.cpf_entry.get()
+        numero_contato = self.numero_contato_entry.get()
+
+        dono = Dono(nome, sobrenome, cpf, numero_contato)
+        self.donos.append(dono)
+
+        self.nome_entry.delete(0, "end")
+        self.sobrenome_entry.delete(0, "end")
+        self.cpf_entry.delete(0, "end")
+        self.numero_contato_entry.delete(0, "end")
+
+        messagebox.showinfo("Cadastro de Dono", "Dono cadastrado com sucesso!")
+
+    def cadastrar_animal(self):
+        nome = self.nome_animal_entry.get()
+        especie = self.especie_entry.get()
+        cpf_dono = self.dono_entry.get()
+
+        dono = next((d for d in self.donos if d.cpf == cpf_dono), None)
+
+        if dono:
+            animal = Animal(nome, especie, dono)
+            self.animais.append(animal)
+            self.nome_animal_entry.delete(0, "end")
+            self.especie_entry.delete(0, "end")
+            self.dono_entry.delete(0, "end")
+            messagebox.showinfo("Cadastro de Animal", "Animal cadastrado com sucesso!")
+        else:
+            messagebox.showerror("Erro", "Dono não encontrado. Verifique o CPF do dono.")
+
+    def cadastrar_atendimento(self):
+        nome_animal = self.animal_atendimento_entry.get()
+        data = self.data_entry.get()
+        sintomas = self.sintomas_entry.get()
+        diagnostico = self.diagnostico_entry.get()
+
+        animal = next((a for a in self.animais if a.nome == nome_animal), None)
+
+        if animal:
+            atendimento = AtendimentoVeterinario(animal, data, sintomas, diagnostico)
+            self.atendimentos.append(atendimento)
+            self.animal_atendimento_entry.delete(0, "end")
+            self.data_entry.delete(0, "end")
+            self.sintomas_entry.delete(0, "end")
+            self.diagnostico_entry.delete(0, "end")
+            messagebox.showinfo("Cadastro de Atendimento", "Atendimento cadastrado com sucesso!")
+        else:
+            messagebox.showerror("Erro", "Animal não encontrado. Verifique o nome do animal.")
+    
+    def get_lista_donos(self):
+        return [(d.nome, d.sobrenome, d.cpf, d.numero_contato) for d in self.donos]
+
+    def get_lista_animais(self):
+        return [(a.nome, a.especie, a.dono.cpf) for a in self.animais]
+
+    def get_lista_atendimentos(self):
+        return [(at.animal.nome, at.data, at.sintomas, at.diagnostico) for at in self.atendimentos]
+    
+    def visualizar_animais_por_cpf(self):
+        cpf = self.cpf_entry.get()
+        dono = next((d for d in self.donos if d.cpf == cpf), None)
+        
+        if dono:
+            animais_dono = [(a.nome, a.especie) for a in self.animais if a.dono == dono]
+            if animais_dono:
+                animais_info = "\n".join([f"Nome: {nome}, Espécie: {especie}" for nome, especie in animais_dono])
+                messagebox.showinfo("Animais do Dono", f"Animais vinculados ao CPF {cpf}:\n{animais_info}")
+            else:
+                messagebox.showinfo("Animais do Dono", f"Nenhum animal vinculado ao CPF {cpf}.")
+        else:
+            messagebox.showerror("Erro", "Dono não encontrado. Verifique o CPF do dono.")
+
+    def visualizar_atendimentos_por_animal_e_dono(self):
+        nome_animal = self.nome_animal_atendimento_entry.get()
+        cpf_dono = self.cpf_dono_atendimento_entry.get()
+        animal = next((a for a in self.animais if a.nome == nome_animal and a.dono.cpf == cpf_dono), None)
+        if animal:
+            atendimentos_animal = [at for at in self.atendimentos if at.animal == animal]
+            if atendimentos_animal:
+                atendimentos_str = "\n".join([f"Data: {at.data}\nSintomas: {at.sintomas}\nDiagnóstico: {at.diagnostico}\n" for at in atendimentos_animal])
+                messagebox.showinfo("Atendimentos do Animal", f"Atendimentos do Animal {nome_animal} (CPF do Dono: {cpf_dono}):\n{atendimentos_str}")
+            else:
+                messagebox.showinfo("Atendimentos do Animal", f"Nenhum atendimento para o Animal {nome_animal} (CPF do Dono: {cpf_dono}).")
+        else:
+            messagebox.showerror("Erro", "Animal não encontrado. Verifique o nome do animal e o CPF do dono.")
+            
+    def atualizar_dono(self):
+        cpf = self.cpf_dono_atualizar_entry.get()
+        novo_nome = self.novo_nome_dono_entry.get()
+        novo_sobrenome = self.novo_sobrenome_dono_entry.get()
+        novo_numero_contato = self.novo_numero_contato_dono_entry.get()
+
+        dono = next((d for d in self.donos if d.cpf == cpf), None)
+
+        if dono:
+            dono.nome = novo_nome
+            dono.sobrenome = novo_sobrenome
+            dono.numero_contato = novo_numero_contato
+            messagebox.showinfo("Atualização de Dono", "Dados do dono atualizados com sucesso!")
+        else:
+            messagebox.showerror("Erro", "Dono não encontrado. Verifique o CPF do dono.")
+
+    def atualizar_animal(self):
+        nome_animal = self.nome_animal_atualizar_entry.get()
+        novo_nome_animal = self.novo_nome_animal_entry.get()
+        nova_especie = self.nova_especie_entry.get()
+
+        animal = next((a for a in self.animais if a.nome == nome_animal), None)
+
+        if animal:
+            animal.nome = novo_nome_animal
+            animal.especie = nova_especie
+            messagebox.showinfo("Atualização de Animal", "Dados do animal atualizados com sucesso!")
+        else:
+            messagebox.showerror("Erro", "Animal não encontrado. Verifique o nome do animal.")
+
+    def criar_interface_dono(self):
+        
+        label_nome = tk.Label(self.tab_dono, text="# Cadastro de Adotantes de Animais:")
+        label_nome.grid(row=0, column=0)
+        # Labels e Entries para cadastrar donos
+        label_nome = tk.Label(self.tab_dono, text="Nome:")
+        label_nome.grid(row=1, column=0)
+        self.nome_entry = tk.Entry(self.tab_dono)
+        self.nome_entry.grid(row=1, column=1)
+
+        label_sobrenome = tk.Label(self.tab_dono, text="Sobrenome:")
+        label_sobrenome.grid(row=1, column=2)
+        self.sobrenome_entry = tk.Entry(self.tab_dono)
+        self.sobrenome_entry.grid(row=1, column=3)
+
+        label_cpf = tk.Label(self.tab_dono, text="CPF:")
+        label_cpf.grid(row=2, column=0)
+        self.cpf_entry = tk.Entry(self.tab_dono)
+        self.cpf_entry.grid(row=2, column=1)
+
+        label_numero_contato = tk.Label(self.tab_dono, text="Contato:")
+        label_numero_contato.grid(row=2, column=2)
+        self.numero_contato_entry = tk.Entry(self.tab_dono)
+        self.numero_contato_entry.grid(row=2, column=3)
+
+        # Botões de ação para Donos
+        btn_cadastrar_dono = tk.Button(self.tab_dono, text=" Confirmar ", command=self.cadastrar_dono)
+        btn_cadastrar_dono.grid(row=5, column=3)
+
+        # Botão para visualizar animais vinculados a um CPF de dono
+        btn_visualizar_animais_por_cpf = tk.Button(self.tab_dono, text="Pets Adotados", command=self.visualizar_animais_por_cpf)
+        btn_visualizar_animais_por_cpf.grid(row=2, column=5, columnspan=2)
+        
+        # Botão para atualizar dados do proprietário
+        btn_atualizar_dono = tk.Button(self.tab_dono, text="Atualizar Dados", command=self.atualizar_dono)
+        btn_atualizar_dono.grid(row=1, column=5, columnspan=2)
+    
+    def criar_interface_animal(self):
+        # Labels e Entries para cadastrar animais
+        label_nome_animal = tk.Label(self.tab_animal, text="Nome do Animal:")
+        label_nome_animal.grid(row=0, column=0)
+        self.nome_animal_entry = tk.Entry(self.tab_animal)
+        self.nome_animal_entry.grid(row=0, column=1)
+
+        label_especie = tk.Label(self.tab_animal, text="Espécie:")
+        label_especie.grid(row=1, column=0)
+        self.especie_entry = tk.Entry(self.tab_animal)
+        self.especie_entry.grid(row=1, column=1)
+
+        label_dono = tk.Label(self.tab_animal, text="Dono (CPF):")
+        label_dono.grid(row=2, column=0)
+        self.dono_entry = tk.Entry(self.tab_animal)
+        self.dono_entry.grid(row=2, column=1)
+
+        # Botões de ação para Animais
+        btn_cadastrar_animal = tk.Button(self.tab_animal, text="Cadastrar Animal", command=self.cadastrar_animal)
+        btn_cadastrar_animal.grid(row=3, column=0, columnspan=2)
+        
+        btn_atualizar_animal = tk.Button(self.tab_animal, text="Atualizar Animal", command=self.atualizar_animal)
+        btn_atualizar_animal.grid(row=4, column=0, columnspan=2)
+
+    def criar_interface_atendimento(self):
+        # Labels e Entries para cadastrar atendimento veterinário
+        label_animal_atendimento = tk.Label(self.tab_atendimento, text="Animal:")
+        label_animal_atendimento.grid(row=0, column=0)
+        self.animal_atendimento_entry = tk.Entry(self.tab_atendimento)
+        self.animal_atendimento_entry.grid(row=0, column=1)
+
+        label_data = tk.Label(self.tab_atendimento, text="Data:")
+        label_data.grid(row=1, column=0)
+        self.data_entry = tk.Entry(self.tab_atendimento)
+        self.data_entry.grid(row=1, column=1)
+
+        label_sintomas = tk.Label(self.tab_atendimento, text="Sintomas:")
+        label_sintomas.grid(row=2, column=0)
+        self.sintomas_entry = tk.Entry(self.tab_atendimento)
+        self.sintomas_entry.grid(row=2, column=1)
+
+        label_diagnostico = tk.Label(self.tab_atendimento, text="Diagnóstico:")
+        label_diagnostico.grid(row=3, column=0)
+        self.diagnostico_entry = tk.Entry(self.tab_atendimento)
+        self.diagnostico_entry.grid(row=3, column=1)
+
+        # Botões de ação para Atendimento Veterinário
+        btn_cadastrar_atendimento = tk.Button(self.tab_atendimento, text="Cadastrar Atendimento", command=self.cadastrar_atendimento)
+        btn_cadastrar_atendimento.grid(row=4, column=0, columnspan=2)
+
+        # Labels e Entries para visualizar atendimentos por animal e dono
+        label_nome_animal_atendimento = tk.Label(self.tab_atendimento, text="Nome do Animal:")
+        label_nome_animal_atendimento.grid(row=5, column=0)
+        self.nome_animal_atendimento_entry = tk.Entry(self.tab_atendimento)
+        self.nome_animal_atendimento_entry.grid(row=5, column=1)
+
+        label_cpf_dono_atendimento = tk.Label(self.tab_atendimento, text="CPF do Dono:")
+        label_cpf_dono_atendimento.grid(row=6, column=0)
+        self.cpf_dono_atendimento_entry = tk.Entry(self.tab_atendimento)
+        self.cpf_dono_atendimento_entry.grid(row=6, column=1)
+        
+        
+        # Botão para visualizar atendimentos por animal e dono
+        btn_visualizar_atendimentos = tk.Button(self.tab_atendimento, text="Visualizar Atendimentos", command=self.visualizar_atendimentos_por_animal_e_dono)
+        btn_visualizar_atendimentos.grid(row=7, column=0, columnspan=2)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = CRUDApp(root)
+    root.mainloop()
